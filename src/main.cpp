@@ -1,11 +1,14 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <filesystem>
 #include "Solution.hpp"
 #include "Data.h"
 #include "Construction.hpp"
+#include "LocalSearch.hpp"
 
 using namespace std;
+namespace fs = std::filesystem;
 
 double diffTimespec(const timespec &start, const timespec &end)
 {
@@ -25,9 +28,9 @@ double diffTimespec(const timespec &start, const timespec &end)
 
 int main(int argc, char *argv[])
 {
-    if(argc < 2)
+    if (argc < 2)
     {
-        std::cerr << "Uso: " << argv[0] << " <path/instance>";
+        std::cerr << "Uso: " << argv[0] << " <path/instance>" << endl;
         return 1;
     }
 
@@ -38,12 +41,37 @@ int main(int argc, char *argv[])
 
     Solution sol;
     Construction cons;
+    LocalSearch lc;
     clock_gettime(CLOCK_MONOTONIC, &start);
-    cons.run(data, sol);
+    cons.runCI(data, sol);
+    lc.run(data, sol);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     auto time = diffTimespec(start, end);
+
+    // Exibe a solução
+    cout << "Solucao: ";
     sol.print();
-    cout << sol.cost << endl;
-    cout << time << "s" << endl;
+
+    // Exibe o custo armazenado
+    cout << "Custo armazenado: " << sol.cost << endl;
+
+    // Verifica se o custo está correto
+    double costDifference = sol.checkCost(data);
+    cout << "Diferenca de custo (recalculado - armazenado): " << costDifference << endl;
+
+    // Indica se o custo está correto
+    if (costDifference == 0)
+    {
+        cout << "Custo VERIFICADO: Correto" << endl;
+    }
+    else
+    {
+        cout << "Custo VERIFICADO: Incorreto (diferenca = " << costDifference << ")" << endl;
+    }
+
+    // Exibe o tempo de execução
+    cout << "Tempo de execucao: " << time << "s" << endl;
+
+    return 0;
 }
