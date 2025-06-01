@@ -4,74 +4,86 @@
 #include <filesystem>
 #include "Solution.hpp"
 #include "Data.h"
-#include "Construction.hpp"
-#include "LocalSearch.hpp"
+#include "Ils.hpp"
+#include "BenchmarkRunner.hpp"
 
 using namespace std;
-namespace fs = std::filesystem;
-
-double diffTimespec(const timespec &start, const timespec &end)
-{
-    timespec temp;
-    if ((end.tv_nsec - start.tv_nsec) < 0)
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
-        temp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
-    }
-    else
-    {
-        temp.tv_sec = end.tv_sec - start.tv_sec;
-        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
-    }
-    return temp.tv_sec + (temp.tv_nsec * 1e-9);
-}
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
+    char method = 'c'; // Padrão: Cheapest Insertion
+    string instancePath;
+    bool runAll = false;
+
+    for (int i = 1; i < argc; ++i)
     {
-        std::cerr << "Uso: " << argv[0] << " <path/instance>" << endl;
-        return 1;
+        string arg = argv[i];
+        if (arg == "-n")
+        {
+            method = 'n';
+        }
+        else if (arg == "-c")
+        {
+            method = 'c';
+        }
+        else if (arg == "--all")
+        {
+            runAll = true;
+        }
+        else if (arg[0] != '-')
+        {
+            instancePath = arg;
+        }
+        else
+        {
+            cerr << "Uso: " << argv[0] << " [-n | -c] [--all] [path/instance]" << endl;
+            return 1;
+        }
     }
 
-    timespec start{}, end{};
-
-    Data data(argc, argv[1]);
-    data.read();
-
-    Solution sol;
-    Construction cons;
-    LocalSearch lc;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    cons.runCI(data, sol);
-    lc.run(data, sol);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    auto time = diffTimespec(start, end);
-
-    // Exibe a solução
-    cout << "Solucao: ";
-    sol.print();
-
-    // Exibe o custo armazenado
-    cout << "Custo armazenado: " << sol.cost << endl;
-
-    // Verifica se o custo está correto
-    double costDifference = sol.checkCost(data);
-    cout << "Diferenca de custo (recalculado - armazenado): " << costDifference << endl;
-
-    // Indica se o custo está correto
-    if (costDifference == 0)
+    if (runAll)
     {
-        cout << "Custo VERIFICADO: Correto" << endl;
+        string baseFile = "baseInstances.txt";
+        string folder = "instances/";
+        string outputFile = "results_3.csv";
+
+        auto results = BenchmarkRunner::runBatch(folder, baseFile, method);
+        BenchmarkRunner::writeResultsToCSV(results, outputFile);
+        cout << "Resultados salvos em " << outputFile << endl;
     }
     else
     {
-        cout << "Custo VERIFICADO: Incorreto (diferenca = " << costDifference << ")" << endl;
-    }
+        if (instancePath.empty())
+        {
+            cerr << "Uso: " << argv[0] << " [-n | -c] <path/instance>" << endl;
+            return 1;
+        }
 
-    // Exibe o tempo de execução
-    cout << "Tempo de execucao: " << time << "s" << endl;
+        Data data(2, (char*)instancePath.c_str());
+        data.read();
+
+        Solution sol;
+        Ils ils;
+        int maxIter = 50;
+        int dim = data.getDimension();
+        int maxIterIls = (dim >= 150) ? dim / 2 : dim;
+
+        timespec start{}, end{};
+        clock_gettime(CLOCK_MONOTONIC, &start);
+        ils.run(data, sol, maxIter, maxIterIls, method);
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        double time = BenchmarkRunner::diffTimespec(start, end);
+
+        cout << "Solucao: ";
+        sol.print();
+        cout << "Custo armazenado: " << sol.cost << endl;
+
+        double costDifference = sol.checkCost(data);
+        cout << "Diferenca de custo (recalculado - armazenado): " << costDifference << endl;
+        cout << "Custo VERIFICADO: " << (costDifference == 0 ? "Correto" : "Incorreto") << endl;
+        cout << "Tempo de execucao: " << time << "s" << endl;
+    }
 
     return 0;
 }

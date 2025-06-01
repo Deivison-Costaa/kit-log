@@ -1,6 +1,6 @@
 # Compilador e flags
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -I./src/models -I./src/utils -I./src/construction -I./src/localSearch
+CXXFLAGS = -std=c++17 -Wall -Wextra -I./src/models -I./src/utils -I./src/construction -I./src/localSearch -I./src/metaheuristic -O3
 
 # Diretórios
 SRC_DIR = src
@@ -8,9 +8,17 @@ MODEL_DIR = $(SRC_DIR)/models
 UTILS_DIR = $(SRC_DIR)/utils
 CONSTRUCTION_DIR = $(SRC_DIR)/construction
 LOCALSEARCH_DIR = $(SRC_DIR)/localSearch
+METAHEURISTIC_DIR = $(SRC_DIR)/metaheuristic
 
 # Fontes e objetos
-SRCS = $(SRC_DIR)/main.cpp $(MODEL_DIR)/Solution.cpp $(UTILS_DIR)/Data.cpp $(CONSTRUCTION_DIR)/Construction.cpp $(LOCALSEARCH_DIR)/LocalSearch.cpp
+SRCS = $(SRC_DIR)/main.cpp \
+       $(MODEL_DIR)/Solution.cpp \
+       $(UTILS_DIR)/Data.cpp \
+       $(CONSTRUCTION_DIR)/Construction.cpp \
+       $(LOCALSEARCH_DIR)/LocalSearch.cpp \
+       $(METAHEURISTIC_DIR)/Ils.cpp \
+       $(UTILS_DIR)/BenchmarkRunner.cpp
+
 OBJS = $(SRCS:.cpp=.o)
 
 # Nome do executável

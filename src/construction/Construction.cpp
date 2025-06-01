@@ -3,9 +3,10 @@
 #include <random>
 #include <limits>
 #include <algorithm>
+#include <queue>
 #include "Construction.hpp"
 
-void Construction::initSolution(const Data &data, Solution &s, std::vector<int> &CL, const int dim)
+void Construction::initSolution(const Data &data, Solution &s, std::unordered_set<int> &CL, const int dim)
 {
     if (dim < 4)
         throw std::invalid_argument("Falha na construção: Dimensão muito pequena.");
@@ -36,11 +37,11 @@ void Construction::initSolution(const Data &data, Solution &s, std::vector<int> 
     for (int i = 2; i <= dim; ++i)
     {
         if (nums.find(i) == nums.end())
-            CL.push_back(i);
+            CL.insert(i);
     }
 }
 
-void Construction::initializeMinDist(const Data &data, const std::vector<int> &sequence, const std::vector<int> &CL, std::vector<double> &min_dist)
+void Construction::initializeMinDist(const Data &data, const std::vector<int> &sequence, const std::unordered_set<int> &CL, std::vector<double> &min_dist)
 {
     for (int node : sequence)
     {
@@ -55,7 +56,7 @@ void Construction::initializeMinDist(const Data &data, const std::vector<int> &s
     }
 }
 
-int Construction::selectClosestNode(const std::vector<int> &CL, const std::vector<double> &min_dist)
+int Construction::selectClosestNode(const std::unordered_set<int> &CL, const std::vector<double> &min_dist)
 {
     int k = -1;
     double min_val = std::numeric_limits<double>::max();
@@ -87,7 +88,7 @@ void Construction::findBestInsertion(const Data &data, const std::vector<int> &s
     }
 }
 
-void Construction::updateMinDist(const Data &data, int inserted_node, const std::vector<int> &CL, std::vector<double> &min_dist)
+void Construction::updateMinDist(const Data &data, int inserted_node, const std::unordered_set<int> &CL, std::vector<double> &min_dist)
 {
     for (int unvisited : CL)
     {
@@ -101,37 +102,40 @@ void Construction::updateMinDist(const Data &data, int inserted_node, const std:
 
 void Construction::runNI(const Data &data, Solution &s)
 {
-    std::vector<int> CL;
+    std::unordered_set<int> CL;
     initSolution(data, s, CL, data.getDimension());
-    int dim = data.getDimension();
-    std::vector<double> min_dist(dim + 1, std::numeric_limits<double>::max());
 
+    int dim = data.getDimension();
+    // min_dist[i] = distância mínima de i até qualquer nó na solução corrente
+    std::vector<double> min_dist(dim + 1, std::numeric_limits<double>::max());
     initializeMinDist(data, s.sequence, CL, min_dist);
 
+    // Enquanto existirem nós não inseridos
     while (!CL.empty())
     {
+        // Seleciona o nó mais próximo (NI)
         int k = selectClosestNode(CL, min_dist);
         if (k == -1)
-            break; // Should not happen
+            break; // situação atípica, mas previne loop infinito
 
-        // Remove k from CL
-        CL.erase(std::remove(CL.begin(), CL.end(), k), CL.end());
+        // 1) Remove k do conjunto de candidatos
+        CL.erase(k);
 
-        // Find best insertion position
+        // 2) Encontra a melhor posição de inserção de k na corrente sequência
         int best_pos;
         double best_cost;
         findBestInsertion(data, s.sequence, k, best_pos, best_cost);
 
-        // Insert k after position best_pos
+        // 3) Insere k na posição e atualiza custo acumulado
         s.sequence.insert(s.sequence.begin() + best_pos + 1, k);
         s.cost += best_cost;
 
-        // Update min_dist for remaining CL
+        // 4) Atualiza distâncias mínimas em relação ao nó inserido
         updateMinDist(data, k, CL, min_dist);
     }
 }
 
-void Construction::calculateInsertionCost(const Data &data, const std::vector<int> &sequence, const std::vector<int> &CL, std::vector<InsertionInfo> &insertionCost)
+void Construction::calculateInsertionCost(const Data &data, const std::vector<int> &sequence, const std::unordered_set<int> &CL, std::vector<InsertionInfo> &insertionCost)
 {
     int l = 0;
     for (int a = 0; a < sequence.size() - 1; ++a)
@@ -148,12 +152,12 @@ void Construction::calculateInsertionCost(const Data &data, const std::vector<in
     }
 }
 
-void Construction::updateConstruction(std::vector<int> &CL, Solution &s, const InsertionInfo &insertionInfo)
+void Construction::updateConstruction(std::unordered_set<int> &CL, Solution &s, const InsertionInfo &insertionInfo)
 {
-    auto it = std::find(CL.begin(), CL.end(), insertionInfo.insertedNode);
+    auto it = CL.find(insertionInfo.insertedNode);
     if (it != CL.end())
     {
-        CL.erase(it);
+        CL.erase(it); // Erase por iterador (mais eficiente que erase por chave)
     }
 
     s.sequence.insert(s.sequence.begin() + insertionInfo.removedEdge + 1, insertionInfo.insertedNode);
@@ -162,7 +166,7 @@ void Construction::updateConstruction(std::vector<int> &CL, Solution &s, const I
 
 void Construction::runCI(const Data &data, Solution &s)
 {
-    std::vector<int> CL;
+    std::unordered_set<int> CL;
     initSolution(data, s, CL, data.getDimension());
 
     std::vector<InsertionInfo> insertionCost;
@@ -206,8 +210,10 @@ void Construction::runCI(const Data &data, Solution &s)
  * @param method Char especificando o método: 'n' para Nearest Insertion ou 'c' para Cheapest Insertion.
  * @throws std::invalid_argument Se o método especificado for inválido.
  */
-void Construction::runConstruction(const Data &data, Solution &s, char &method)
+void Construction::runConstruction(const Data &data, Solution &s, char method)
 {
+    method = std::tolower(static_cast<unsigned char>(method));
+
     if (method == 'n')
     {
         runNI(data, s);
@@ -218,6 +224,6 @@ void Construction::runConstruction(const Data &data, Solution &s, char &method)
     }
     else
     {
-        throw std::invalid_argument("Método inválido. Use 'N' ou 'C'.");
+        throw std::invalid_argument("Método inválido. Use 'n' ou 'c'.");
     }
 }
