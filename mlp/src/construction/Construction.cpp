@@ -12,12 +12,12 @@ Solution Construction::runMLP(const Data &data, std::vector<double> &R)
 
     Solution s;
     s.sequence = std::vector<int>(data.getDimension() + 1, 0);
-    s.sequence[0] = 1;
-    s.sequence.back() = 1;
+    s.sequence[0] = 0;
+    s.sequence.back() = 0;
     s.cost = 0.0;
 
     std::unordered_set<int> CL;
-    for (int i = 2; i <= data.getDimension(); ++i)
+    for (int i = 1; i < data.getDimension(); ++i)
     {
         CL.insert(i);
     }
@@ -28,7 +28,7 @@ Solution Construction::runMLP(const Data &data, std::vector<double> &R)
     double alpha = R[distrib(gen)];
 
     int position = 1;
-    int r = 1;
+    int r = 0;
     
     while (!CL.empty())
     {
@@ -64,11 +64,6 @@ Solution Construction::runMLP(const Data &data, std::vector<double> &R)
         r = selected_node;
 
         CL.erase(selected_node);
-    }
-
-    for (size_t i = 0; i < s.sequence.size() - 1; ++i)
-    {
-        s.cost += data.getDistance(s.sequence[i], s.sequence[i + 1]);
     }
 
     return s;

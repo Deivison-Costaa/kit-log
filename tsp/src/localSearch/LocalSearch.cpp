@@ -92,7 +92,9 @@ bool LocalSearch::bestImprovementOrOpt(const Data &data, Solution &s, const int 
     double bestDelta = 0.0;
     int bestI, bestJ;
 
-    for(int i = 1; i < s.sequence.size() - blockSize - 1; ++i)
+    cout << blockSize << endl;
+
+    for(int i = 1; i < s.sequence.size() - blockSize; ++i)
     {
         int viPrev = s.sequence[i - 1];
         int viFirst = s.sequence[i];
@@ -103,6 +105,7 @@ bool LocalSearch::bestImprovementOrOpt(const Data &data, Solution &s, const int 
 
         for(int j = 0; j < s.sequence.size() - 1; ++j)
         {
+            cout << i << " " << j << endl;
             if (j >= i - 1 && j <= i + blockSize - 1) continue;
             if (j == i - 1 && blockSize == 1) continue;
 

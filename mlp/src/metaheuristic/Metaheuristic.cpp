@@ -18,32 +18,13 @@ Solution Metaheuristic::run(const Data &data, int max_iter_ils, int max_iter)
     {
         Solution s = cons.runMLP(data, R);
 
-        cout << "após construção" << s;
-        cout << s.cost << endl;
-        getchar();
-
         int n = s.sequence.size();
         std::vector<std::vector<Subsequence>> subseq_matrix(n, std::vector<Subsequence>(n));
 
         UpdateAllSubseq(s, data, subseq_matrix);
         s.cost = subseq_matrix[0][s.sequence.size() - 1].C;
 
-        cout << "após atualizar valor construçao" << s;
-        cout << s.cost << endl;
-        getchar();
-
-        // cout << s;
-
         ls.run(data, s, subseq_matrix);
-        assert(s.checkCost(data) == 0);
-
-        cout << "após primeiro run" << s;
-        cout << s.cost << endl;
-        getchar();
-
-        // cout << s;
-        // getchar();
-
 
         Solution s_ils = s;
         int counter = 0;
@@ -51,15 +32,7 @@ Solution Metaheuristic::run(const Data &data, int max_iter_ils, int max_iter)
         {
             s = perturb(data, s_ils, subseq_matrix);
 
-            cout << "após perturb" << s;
-            cout << s.cost << endl;
-            getchar();
-
             ls.run(data, s, subseq_matrix);
-
-            cout << "após run" << s;
-            cout << s.cost << endl;
-            getchar();
 
             if (s.cost < s_ils.cost)
             {
@@ -71,13 +44,11 @@ Solution Metaheuristic::run(const Data &data, int max_iter_ils, int max_iter)
                 counter++;
             }
 
-            if(counter == max_iter_ils) cout << "gils " << s_best.cost << endl;
         }
-        if (s.cost < s_best.cost)
+        if (s_ils.cost < s_best.cost)
         {
-            s_best = s;
+            s_best = s_ils;
         }
-        assert(s.checkCost(data) == 0);
     }
 
     return s_best;
@@ -87,10 +58,6 @@ Solution Metaheuristic::perturb(const Data &data, const Solution &best, std::vec
 {
     Solution s_pert = best;
     int n = s_pert.sequence.size() - 1;
-
-    cout << "s_pert: " << s_pert << endl;
-    cout << " best: "<< best << endl;
-    getchar();
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -115,18 +82,14 @@ Solution Metaheuristic::perturb(const Data &data, const Solution &best, std::vec
     std::vector<int> new_seq;
     new_seq.reserve(s_pert.sequence.size());
     new_seq.insert(new_seq.end(), s_pert.sequence.begin(), s_pert.sequence.begin() + a);
-    new_seq.insert(new_seq.end(), s_pert.sequence.begin() + c, s_pert.sequence.begin() + d + 1);
+    new_seq.insert(new_seq.end(), s_pert.sequence.begin() + c, s_pert.sequence.begin() + d);
     new_seq.insert(new_seq.end(), s_pert.sequence.begin() + b, s_pert.sequence.begin() + c);
     new_seq.insert(new_seq.end(), s_pert.sequence.begin() + a, s_pert.sequence.begin() + b);
-    new_seq.insert(new_seq.end(), s_pert.sequence.begin() + d + 1, s_pert.sequence.end());
+    new_seq.insert(new_seq.end(), s_pert.sequence.begin() + d, s_pert.sequence.end());
     s_pert.sequence = new_seq;
 
     UpdateAllSubseq(s_pert, data, subseq_matrix);
     s_pert.cost = subseq_matrix[0][s_pert.sequence.size() - 1].C;
-
-    cout << "s_pert: " << s_pert << endl;
-    cout << " best: " << best << endl;
-    getchar();
 
     return s_pert;
 }

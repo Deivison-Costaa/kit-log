@@ -3,12 +3,12 @@
 
 void Solution::print() const
 {
-    std::cout << sequence[0] - 1 << " -> ";
+    std::cout << sequence[0] << " -> ";
     for (size_t i = 1; i < sequence.size() - 1; ++i)
     {
-        std::cout << sequence[i] - 1 << " -> ";
+        std::cout << sequence[i] << " -> ";
     }
-    std::cout << sequence[sequence.size() - 1] - 1 << std::endl;
+    std::cout << sequence[sequence.size() - 1] << std::endl;
 }
 
 int Solution::checkCost(const Data &data) const
@@ -16,11 +16,16 @@ int Solution::checkCost(const Data &data) const
     double calculatedCost = 0.0;
     double travelTime = 0.0;
 
-    for (size_t i = 1; i < sequence.size() - 1; ++i)
+
+    for (size_t i = 0; i < sequence.size() - 1; ++i)
     {
-        travelTime += data.getDistance(sequence[i - 1], sequence[i]);
+        double aux = data.getDistance(sequence[i], sequence[i + 1]);
+        //cout << "auxiliar: " << aux << endl;
+        travelTime += aux;
         calculatedCost += travelTime;
+        //cout << "travelTime " << travelTime << "  calculatedCost " << calculatedCost << endl;
     }
+    // cout << "final calculated cost: " << calculatedCost << endl;
     return calculatedCost - cost;
 }
 

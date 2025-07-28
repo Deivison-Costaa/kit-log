@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Solution.hpp"    // Assumindo que Solution está definida aqui
-#include "Data.h"        // Assumindo que Data está definida aqui
+#include "Solution.hpp" // Assumindo que Solution está definida aqui
+#include "Data.h"       // Assumindo que Data está definida aqui
 #include <vector>
 
 struct Subsequence
@@ -36,10 +36,10 @@ struct Subsequence
 };
 
 static void UpdateAllSubseq(const Solution &s, const Data &data,
-                     std::vector<std::vector<Subsequence>> &subseq_matrix)
+                            std::vector<std::vector<Subsequence>> &subseq_matrix)
 {
 
-    int n_seq_nodes = s.sequence.size(); 
+    int n_seq_nodes = s.sequence.size();
     if (n_seq_nodes == 0)
     {
         subseq_matrix.clear();
@@ -54,6 +54,8 @@ static void UpdateAllSubseq(const Solution &s, const Data &data,
         subseq_matrix[i][i] = Subsequence(s.sequence[i], is_first_node_of_tour);
         subseq_matrix[i][i].first = s.sequence[i];
         subseq_matrix[i][i].last = s.sequence[i];
+        subseq_matrix[i][i].T = 0;
+        subseq_matrix[i][i].C = 0;
     }
 
     for (int i = 0; i < n_seq_nodes; ++i)
@@ -109,7 +111,7 @@ static void UpdateAllSubseq(const Solution &s, const Data &data,
         }
     }
 
-    //Atualizar subsequências invertidas que incluem attI ou attJ
+    // Atualizar subsequências invertidas que incluem attI ou attJ
     for (int i = n - 1; i >= 0; --i)
     {
         for (int j = i; j >= 0; --j)
