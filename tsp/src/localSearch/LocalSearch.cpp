@@ -15,6 +15,7 @@ bool LocalSearch::bestImprovementSwap(const Data &data, Solution &s)
 
         for(int j = i + 1; j < s.sequence.size() - 1; ++j)
         {
+            //cout << i << " " << j << endl;
             int vj = s.sequence[j];
             int vjPrev = s.sequence[j - 1];
             int vjNext = s.sequence[j + 1];
@@ -64,6 +65,7 @@ bool LocalSearch::bestImprovement2Opt(const Data &data, Solution &s)
 
         for(int j = i + 2; j < s.sequence.size() - 1; ++j)
         {
+            //cout << i + 1 << " " << j << endl;
             int vj = s.sequence[j];
             int vjNext = s.sequence[j + 1];
 
@@ -90,47 +92,50 @@ bool LocalSearch::bestImprovement2Opt(const Data &data, Solution &s)
 bool LocalSearch::bestImprovementOrOpt(const Data &data, Solution &s, const int blockSize)
 {
     double bestDelta = 0.0;
-    int bestI, bestJ;
+    int bestI = -1, bestJ = -1;
 
-    cout << blockSize << endl;
+    //cout << blockSize << endl;
 
-    for(int i = 1; i < s.sequence.size() - blockSize; ++i)
+    for (int i = 1; i <= s.sequence.size() - 1 - blockSize; ++i)
     {
+
         int viPrev = s.sequence[i - 1];
         int viFirst = s.sequence[i];
         int viLast = s.sequence[i + blockSize - 1];
         int viNext = s.sequence[i + blockSize];
 
-        double deltaVi = - data.getDistance(viPrev, viFirst) - data.getDistance(viLast, viNext) + data.getDistance(viPrev, viNext);
+        double deltaRemove = -data.getDistance(viPrev, viFirst) - data.getDistance(viLast, viNext) + data.getDistance(viPrev, viNext);
 
-        for(int j = 0; j < s.sequence.size() - 1; ++j)
+        for (int j = 0; j < s.sequence.size() - 1; ++j)
         {
-            cout << i << " " << j << endl;
-            if (j >= i - 1 && j <= i + blockSize - 1) continue;
-            if (j == i - 1 && blockSize == 1) continue;
+            if (j >= i - 1 && j < i + blockSize)  continue;
+            //else cout << i << " " << j << endl;
 
             int vj = s.sequence[j];
             int vjNext = s.sequence[j + 1];
 
-            double delta =  deltaVi - data.getDistance(vj, vjNext) + data.getDistance(vj, viFirst) + data.getDistance(viLast, vjNext);
-
+            double delta = deltaRemove - data.getDistance(vj, vjNext) + data.getDistance(vj, viFirst) + data.getDistance(viLast, vjNext);
+            //cout << i << " " << j << " " << delta << endl;
             if (delta < bestDelta)
             {
+                //cout << "entrou " << delta << endl;
                 bestDelta = delta;
                 bestI = i;
                 bestJ = j;
             }
         }
     }
-    if(bestDelta < 0)
+
+    if (bestDelta < 0)
     {
         std::vector<int> block(s.sequence.begin() + bestI, s.sequence.begin() + bestI + blockSize);
         s.sequence.erase(s.sequence.begin() + bestI, s.sequence.begin() + bestI + blockSize);
-        int insertPos = (bestJ >= bestI) ? bestJ - blockSize + 1 : bestJ + 1;  //precisa ajustar por conta da remoção anterior
+        int insertPos = (bestJ < bestI) ? bestJ + 1 : (bestJ - blockSize + 1);
         s.sequence.insert(s.sequence.begin() + insertPos, block.begin(), block.end());
         s.cost += bestDelta;
         return true;
     }
+
     return false;
 }
 

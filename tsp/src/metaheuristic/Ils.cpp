@@ -17,8 +17,11 @@ void Ils::run(const Data &data, Solution &bestOfAll, const int maxIter, const in
     for (size_t i = 0; i < maxIter; ++i)
     {
         Solution s;
-        cons.runConstruction(data, s, constructionMethod);
-        Solution best = s;
+        s = cons.run(data);
+        Solution best = s;  
+        // best.print();
+        // getchar();
+        ////cout << "bestofall " << bestOfAll.cost << endl;
 
         int iterIls = 0;
 
@@ -47,40 +50,41 @@ void Ils::run(const Data &data, Solution &bestOfAll, const int maxIter, const in
 
 Solution Ils::perturb(const Data &data, const Solution &best)
 {
-    Solution s_pert = best;      
+    Solution s_pert = best;
     int n = s_pert.sequence.size() - 1;
+    const int min_size = 2;
+    const int max_size = std::ceil((n - 1) / 10);
 
+    if (max_size < min_size) return s_pert; //instance < 10
+    
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::vector<int> indices;
-    for (int i = 1; i < n; ++i)
-    {
-        indices.push_back(i); //isso foi desespero pq aleatoriedade tava dando ruim, alterar dps (mas não muda muito(agora que pensei melhor eles usam modulo,
-        //então muda sim)) 
-    }
-    std::shuffle(indices.begin(), indices.end(), gen);
-    int a = indices[0];
-    int b = indices[1];
-    int c = indices[2];
-    int d = indices[3];
+    std::uniform_int_distribution<int> len_dist(min_size, max_size);
 
-    std::vector<int> selected = {a, b, c, d};
-    std::sort(selected.begin(), selected.end());
-    a = selected[0];
-    b = selected[1];
-    c = selected[2];
-    d = selected[3];
+    int len1 = len_dist(gen);
+    int len2 = len_dist(gen);
+    int max_a = n - len1 - len2 - 2;
 
-    // Calcula o delta
-    double delta = -data.getDistance(best.sequence[a - 1], best.sequence[a]) - data.getDistance(best.sequence[b - 1], best.sequence[b])
-                   - data.getDistance(best.sequence[c - 1], best.sequence[c]) - data.getDistance(best.sequence[d - 1], best.sequence[d])
-                   + data.getDistance(best.sequence[a - 1], best.sequence[c]) + data.getDistance(best.sequence[d - 1], best.sequence[b]) 
-                   + data.getDistance(best.sequence[c - 1], best.sequence[a]) + data.getDistance(best.sequence[b - 1], best.sequence[d]);
+    if (max_a < 1) return best;
 
-    // Atualiza o custo
+    std::uniform_int_distribution<int> a_dist(1, max_a);
+    int a = a_dist(gen);
+    int b = a + len1;
+    int max_c = n - len2 - 1;
+    
+    std::uniform_int_distribution<int> c_dist(b + 1, max_c);
+    int c = c_dist(gen);
+    int d = c + len2;
+    double delta =  - data.getDistance(best.sequence[a - 1], best.sequence[a]) 
+                    - data.getDistance(best.sequence[b - 1], best.sequence[b]) 
+                    - data.getDistance(best.sequence[c - 1], best.sequence[c]) 
+                    - data.getDistance(best.sequence[d - 1], best.sequence[d]) 
+                    + data.getDistance(best.sequence[a - 1], best.sequence[c]) 
+                    + data.getDistance(best.sequence[d - 1], best.sequence[b]) 
+                    + data.getDistance(best.sequence[c - 1], best.sequence[a]) 
+                    + data.getDistance(best.sequence[b - 1], best.sequence[d]);
+
     s_pert.cost = best.cost + delta;
-
-    //possivelmente dá pra melhorar isso (novo vector)
     std::vector<int> new_seq;
     new_seq.reserve(s_pert.sequence.size());
     new_seq.insert(new_seq.end(), s_pert.sequence.begin(), s_pert.sequence.begin() + a);
@@ -89,6 +93,5 @@ Solution Ils::perturb(const Data &data, const Solution &best)
     new_seq.insert(new_seq.end(), s_pert.sequence.begin() + a, s_pert.sequence.begin() + b);
     new_seq.insert(new_seq.end(), s_pert.sequence.begin() + d, s_pert.sequence.end());
     s_pert.sequence = new_seq;
-
     return s_pert;
 }

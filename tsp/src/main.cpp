@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     {
         string baseFile = "baseInstances.txt";
         string folder = "instances/";
-        string outputFile = "results_5.csv";
+        string outputFile = "results_10.csv";
 
         auto results = BenchmarkRunner::runBatch(folder, baseFile, method);
         BenchmarkRunner::writeResultsToCSV(results, outputFile);
